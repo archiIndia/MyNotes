@@ -10,7 +10,6 @@ import {
   NavLink,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { NotebookPen, Star, Tag } from "lucide-react";
 import Sidebar from "./components/Sidebar.jsx";
 import AllNotes from "./components/AllNotes.jsx";
 
