@@ -1,5 +1,3 @@
-import "./App.css";
-import "@mantine/core/styles.css";
 
 import {
   MantineProvider,
@@ -10,8 +8,9 @@ import {
   NavLink,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import Sidebar from "./components/Sidebar.jsx";
-import AllNotes from "./components/AllNotes.jsx";
+import Sidebar from "./Sidebar.jsx";
+import AllNotes from "./AllNotes.jsx";
+import { Outlet } from "react-router-dom";
 
 function App() {
   const [opened, { toggle }] = useDisclosure();
@@ -45,7 +44,7 @@ function App() {
             <Sidebar />
           </AppShell.Navbar>
           <AppShell.Main>
-            <AllNotes/>
+         <Outlet />
           </AppShell.Main>
         </AppShell>
       </div>

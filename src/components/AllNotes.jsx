@@ -1,28 +1,20 @@
 import { PlusIcon, Search, ArchiveX, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
+import moment from "moment";
 import {
   createNewNote,
   getAllNotes,
   deleteNote,
   getSingleNote,
+  updateSingleNote,
 } from "../services/Note.Service";
-import {
-  Card,
-  Image,
-  Text,
-  Badge,
-  Button,
-  Group,
-  Modal,
-  Textarea,
-  TextInput,
-} from "@mantine/core";
+import { Card, Text, Button, Modal, Textarea, TextInput } from "@mantine/core";
 
 const AllNotes = () => {
   const [isModalOpened, setIsModalOpened] = useState(false);
-  const openModal = () => setIsModalOpened(true);
   const [notes, setNotes] = useState([]);
   const [view_note, setView_note] = useState(null);
+  const openModal = () => setIsModalOpened(true);
   const closeModal = () => {
     setIsModalOpened(false);
     setView_note(null);
@@ -30,9 +22,9 @@ const AllNotes = () => {
 
   const loadAllNotes = async () => {
     const allNotes = await getAllNotes();
-    console.log(allNotes);
     setNotes(allNotes);
   };
+
   useEffect(() => {
     loadAllNotes();
   }, []);
@@ -49,13 +41,32 @@ const AllNotes = () => {
     setView_note(data);
     setIsModalOpened(true);
   };
-
+  const noteSave = (value) => {
+    console.log(value);
+    setNotes([value, ...notes]);
+  };
+  const noteUpdate = (data) => {
+    const position = notes.findIndex((note) => note._id === data._id);
+    notes[position] = data;
+    setNotes([...notes]);
+    setIsModalOpened(false);
+  };
+  const handleSearch = async (val) => {
+    // "goggle.com?find=archi"
+    // ?seach=archi
+    const qString = `search=${val}`;
+    const result = await getAllNotes(qString);
+    setNotes([...result]);
+  };
   return (
     <div className={"flex flex-col"}>
       <div className={"flex justify-end w-full gap-x-2"}>
-        <Button variant="default">
-          <Search size="14" />
-        </Button>{" "}
+        <TextInput
+          onChange={(ev) => {
+            handleSearch(ev.target.value);
+          }
+        } placeholder="Search"
+        ></TextInput>
         <Button
           color="blue"
           variant="filled"
@@ -65,39 +76,44 @@ const AllNotes = () => {
           New
         </Button>
       </div>
-      <div className="flex flex-col w-72 gap-y-3 mt-2">
+      <div className="flex flex-wrap flex-row gap-x-3 mt-2 row-span-3">
         {notes.map((note, inx) => (
-          <Card shadow="sm" padding="md" radius="md" withBorder>
-            <Text size="xl" c="dimmed">
-              <p>{note.title}</p>
-            </Text>
-            <Text size="sm" c="dimmed">
-              <p>{note.note_body}</p>
-            </Text>
+          <div className="w-60 h-72" key={inx}>
+            <Card shadow="sm" padding="md" radius="md" withBorder h={250}>
+              <div className="flex flex-cols items-centre justify-between">
+                <Text size="xl" p={0} c="dimmed">
+                  {note.title}
+                </Text>
+                <Text>{moment(note.date).format("DD-MM-YYYY")}</Text>
+              </div>
+              <Text size="sm" c="dimmed">
+                {note.note_body} 
+              </Text>
 
-            <div className="mt-4 flex flex-row justify-between">
-              <Button
-                color="blue"
-                radius="md"
-                onClick={() => {
-                  handleFetch(note._id);
-                }}
-                leftSection={<Eye size={18} />}
-              >
-                view
-              </Button>
-              <Button
-                color="red"
-                radius="md"
-                leftSection={<ArchiveX size={18} />}
-                onClick={() => {
-                  handleDelete(note._id);
-                }}
-              >
-                Delete
-              </Button>
-            </div>
-          </Card>
+              <div className="mt-4 flex flex-row justify-between">
+                <Button
+                  color="blue"
+                  radius="md"
+                  onClick={() => {
+                    handleFetch(note._id);
+                  }}
+                  leftSection={<Eye size={18} />}
+                >
+                  view
+                </Button>
+                <Button
+                  color="red"
+                  radius="md"
+                  leftSection={<ArchiveX size={18} />}
+                  onClick={() => {
+                    handleDelete(note._id);
+                  }}
+                >
+                  Delete
+                </Button>
+              </div>
+            </Card>
+          </div>
         ))}
       </div>
 
@@ -107,7 +123,11 @@ const AllNotes = () => {
         title={"Add Note"}
         closeOnClickOutside={false}
       >
-        <AddNewNote viewNote={view_note} />
+        <AddNewNote
+          viewNote={view_note}
+          note_save={noteSave}
+          note_update={noteUpdate}
+        />
       </Modal>
     </div>
   );
@@ -115,18 +135,20 @@ const AllNotes = () => {
 
 export default AllNotes;
 
-const AddNewNote = ({ viewNote }) => {
+const AddNewNote = ({ viewNote, note_save, note_update }) => {
   const [title, setTitle] = useState("");
   const [note_body, setNote_body] = useState("");
-  console.log(viewNote);
+  const [uId, setUId] = useState(null);
 
   useEffect(() => {
     if (viewNote === null) {
       setTitle("");
       setNote_body("");
+      setUId(null);
     } else {
       setTitle(viewNote.title);
       setNote_body(viewNote.note_body);
+      setUId(viewNote._id);
     }
   }, [viewNote]);
 
@@ -135,10 +157,21 @@ const AddNewNote = ({ viewNote }) => {
     // console.log(note_body);
     const payloadBody = { _title: title, _note_body: note_body };
     const createdNote = await createNewNote(payloadBody);
+    note_save(createdNote);
   };
   const handleClear = () => {
     setTitle("");
     setNote_body("");
+    setUId(null);
+  };
+  const handleUpdate = async () => {
+    console.log(uId);
+    const update = await updateSingleNote(uId, {
+      title: title,
+      note_body: note_body,
+    });
+    handleClear();
+    note_update(update);
   };
   return (
     <div>
@@ -161,10 +194,15 @@ const AddNewNote = ({ viewNote }) => {
           minRows={7}
         />
         <div className="flex justify-end ">
-        <Button onClick={handleClear} className="mr-2">Clear</Button>
-          <Button onClick={handleSave} color="green">
-            Save
+          <Button onClick={handleClear} className="mr-2" color="pink">
+            Clear
           </Button>
+          {uId === null && (
+            <Button onClick={handleSave} color="green">
+              Save
+            </Button>
+          )}
+          {uId !== null && <Button onClick={handleUpdate}>Update</Button>}
         </div>
       </form>
     </div>

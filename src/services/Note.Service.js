@@ -11,9 +11,9 @@ const createNewNote = async (payload) => {
     throw error;
   }
 };
-const getAllNotes = async (page_number = 1) => {
+const getAllNotes = async (queryString) => {
   try {
-    const response = await axios.get(`${baseURL}?page=${page_number}`);
+    const response = await axios.get(`${baseURL}?${queryString}`);
     return response.data;
   } catch (error) {
     console.log(error.message);
@@ -36,14 +36,14 @@ const getSingleNote = async (note_id) => {
     console.log("can not find the Note");
   }
 };
-const updateSingleNote = async (note_id ,{note_title,note_body,dateVal}) =>{
+const updateSingleNote = async (note_id ,{title,note_body}) =>{
   try{
     const payload ={
-      title: note_title,
+      _title: title,
       note_body: note_body,
-      date: dateVal,
     }
-    const updated = await axios.post(baseURL+ "/" + note_id,payload);
+    const updated = await axios.put(`${baseURL}/${note_id}`,payload);
+    console.log(updated)
   return updated.data;
   }
   catch(error){
